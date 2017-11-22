@@ -53,6 +53,7 @@
       type: enum
       options:
         - local
+        - rancher-ebs
         - rancher-nfs
       required: false
 
