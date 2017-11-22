@@ -1,0 +1,91 @@
+---
+.catalog:
+  name: "Verdaccio"
+  version: "v1.0.0"
+  description: |
+    A lightweight private npm proxy registry (sinopia fork)
+  questions:
+    - variable: IMAGE_VERSION
+      label: "Verdaccio image version"
+      type: enum
+      options:
+        - verdaccio/verdaccio:latest
+        - verdaccio/verdaccio:beta
+      default: verdaccio/verdaccio:latest
+      required: true
+    - variable: ADMIN_USERNAME
+      label: "Admin username"
+      type: string
+      required: true
+    - variable: ADMIN_PASSWORD
+      label: "Admin password"
+      type: password
+      required: true
+    - variable: HOSTNAME
+      label: "Hostname"
+      description: "Example: npm.example.com"
+      type: string
+      required: true
+    - variable: PORT
+      label: "Port"
+      type: int
+      default: 4873
+      required: true
+    - variable: MAX_USERS
+      label: "Max users (Optional)"
+      description: |
+        Maximum amount of users allowed to register. Default not set.
+        You can set this to -1 to disable registration.
+      type: int
+      required: false
+    - variable: HOST_LABEL
+      label: "Host label for deploy verdaccio (Optional)"
+      type: string
+      required: false
+    - variable: VOLUME_NAME
+      label: Volume Name of verdaccio storage (Optional)
+      description: To store the packages.
+      type: string
+      required: false
+    - variable: "VOLUME_DRIVER"
+      label: Volume Driver of verdaccio storage (Optional)
+      description: Choose the Volume Driver being used
+      type: enum
+      options:
+        - local
+        - rancher-nfs
+      required: false
+
+version: '2'
+services:
+  haproxy:
+    scale: 1
+    retain_ip: true
+    lb_config:
+      certs: []
+      port_rules:
+        - hostname: ${HOSTNAME}
+          path: ''
+          priority: 1
+          protocol: http
+          service: verdaccio
+          source_port: 80
+          target_port: 4873
+        - priority: 2
+          protocol: tcp
+          service: verdaccio
+          source_port: ${PORT}
+          target_port: 4873
+    health_check:
+      healthy_threshold: 2
+      response_timeout: 2000
+      port: 42
+      unhealthy_threshold: 3
+      initializing_timeout: 60000
+      interval: 2000
+      strategy: recreate
+      reinitializing_timeout: 60000
+
+  verdaccio:
+    scale: 1
+    retain_ip: true
