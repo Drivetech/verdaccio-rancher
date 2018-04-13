@@ -1,0 +1,23 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - docker build -t lgatica/verdaccio-config:latest config
+
+script:
+  - docker run --rm -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=pass lgatica/verdaccio-config:latest sh -c 'if [ $(grep -c "admin:" /verdaccio/conf/htpasswd) -ne 0 ]; then exit 0; else exit 1; fi'
+
+before_deploy:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+
+deploy:
+  provider: script
+  script: docker push lgatica/verdaccio-config:latest
+  skip_cleanup: true
+  on:
+    branch: master
+
+notifications:
+  email: false
